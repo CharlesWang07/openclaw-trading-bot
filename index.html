@@ -637,67 +637,6 @@
             display: none !important;
         }
 
-        .position-view {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            overflow: auto;
-        }
-
-        .position-list {
-            display: grid;
-            gap: 10px;
-        }
-
-        .position-item {
-            padding: 12px;
-            border-radius: 18px;
-            background: linear-gradient(180deg, rgba(7, 15, 29, 0.96), rgba(6, 12, 24, 0.78));
-            border: 1px solid rgba(118, 167, 255, 0.14);
-        }
-
-        .position-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-        }
-
-        .position-symbol {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.1rem;
-            color: var(--text);
-        }
-
-        .position-grid {
-            margin-top: 10px;
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
-        }
-
-        .position-stat {
-            padding: 10px;
-            border-radius: 14px;
-            background: rgba(4, 12, 24, 0.72);
-            border: 1px solid rgba(118, 167, 255, 0.12);
-        }
-
-        .position-stat span {
-            display: block;
-            color: var(--text-mute);
-            font-size: 0.68rem;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-        }
-
-        .position-stat strong {
-            display: block;
-            margin-top: 6px;
-            color: var(--text);
-            font-size: 1rem;
-        }
-
         .table-wrap {
             flex: 1;
             min-height: 0;
@@ -1219,19 +1158,32 @@
                     <div class="panel-head">
                         <div>
                             <div class="panel-kicker">成交流水</div>
-                            <div class="panel-title">交易记录</div>
-                            <div class="panel-desc">成交和曲线直接对照。</div>
+                            <div class="panel-title" id="tradePanelTitle">当前持仓</div>
+                            <div class="panel-desc" id="tradePanelDesc">实时持仓和浮盈浮亏。</div>
                         </div>
                         <div class="head-chip">
-                            <span>自动切换</span>
+                            <span id="tradePanelChipLabel">当前显示</span>
                             <strong id="tradePanelModeLabel">当前持仓</strong>
                         </div>
                     </div>
 
-                    <div class="panel-view position-view" id="positionView">
-                        <div class="position-list" id="positionList">
-                            <div class="empty-state">暂无持仓</div>
-                        </div>
+                    <div class="panel-view table-wrap" id="positionView">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>方向</th>
+                                    <th>币种</th>
+                                    <th>开仓价</th>
+                                    <th>现价</th>
+                                    <th>杠杆</th>
+                                    <th>盈亏</th>
+                                </tr>
+                            </thead>
+                            <tbody id="positionTable">
+                                <tr><td colspan="7" class="table-empty">暂无持仓</td></tr>
+                            </tbody>
+                        </table>
                     </div>
 
                     <div class="panel-view table-wrap is-hidden" id="tradeTableView">
@@ -1416,22 +1368,42 @@
             }
         }
 
-        function updateStrategy(strategy) {
-            const coins = Array.isArray(strategy?.coins) ? strategy.coins : [];
-            const dynamicTakeProfit = Number(strategy?.takeProfit) <= 0;
-            const allInMode = Boolean(strategy?.allInMode);
-            const hardStopLoss = Number(strategy?.hardStopBalanceLossPct);
-            const softStopLoss = Number(strategy?.softStopLossPct);
-            const capitalFraction = Number(strategy?.capitalFraction);
+        function resolveDisplayStrategy(status) {
+            const watchlist = Array.isArray(status?.watchlist)
+                ? status.watchlist.map((coin) => String(coin).toUpperCase().replace('USDT', ''))
+                : [];
+            const v2Coins = Array.isArray(status?.strategy_v2?.coins)
+                ? status.strategy_v2.coins.map((coin) => String(coin).toUpperCase().replace('USDT', ''))
+                    : [];
 
-            document.getElementById('strategyTakeProfit').textContent = dynamicTakeProfit ? '动态止盈' : `+${Number(strategy?.takeProfit || 0).toFixed(1)}%`;
-            document.getElementById('strategyStopLoss').textContent = hardStopLoss
-                ? `软止损 ${softStopLoss.toFixed(1)}% / 账户-${hardStopLoss}%`
-                : '--';
-            document.getElementById('strategyLeverage').textContent = strategy?.leverage != null ? `${strategy.leverage}x` : '--';
-            document.getElementById('strategyPositionSize').textContent = allInMode
-                ? '主流币池全仓'
-                : (capitalFraction ? `主流币池 ${Math.round(capitalFraction * 100)}%资金` : '主流币池轮动');
+            if (status?.strategy_v2) {
+                return {
+                    source: 'v2',
+                    coins: watchlist.length ? watchlist : v2Coins,
+                    takeProfitText: '4%减半 / 8%全平',
+                    stopLossText: '1.5%止损',
+                    leverageText: '低10x / 中7x / 高5x',
+                    positionSizeText: '10%-15% / 最多3仓',
+                };
+            }
+
+            return {
+                source: 'locked-v2',
+                coins: watchlist.length ? watchlist : v2Coins,
+                takeProfitText: '4%减半 / 8%全平',
+                stopLossText: '1.5%止损',
+                leverageText: '低10x / 中7x / 高5x',
+                positionSizeText: '10%-15% / 最多3仓',
+            };
+        }
+
+        function updateStrategy(status) {
+            const displayStrategy = resolveDisplayStrategy(status);
+            const coins = displayStrategy.coins;
+            document.getElementById('strategyTakeProfit').textContent = displayStrategy.takeProfitText;
+            document.getElementById('strategyStopLoss').textContent = displayStrategy.stopLossText;
+            document.getElementById('strategyLeverage').textContent = displayStrategy.leverageText;
+            document.getElementById('strategyPositionSize').textContent = displayStrategy.positionSizeText;
             const watchlist = document.getElementById('watchlist');
             if (!coins.length) {
                 watchlist.innerHTML = '<span class="token-pill">暂无监控币种</span>';
@@ -1488,65 +1460,56 @@
         }
 
         function updateTradePanelMode() {
+            const title = document.getElementById('tradePanelTitle');
+            const desc = document.getElementById('tradePanelDesc');
+            const chipLabel = document.getElementById('tradePanelChipLabel');
             const label = document.getElementById('tradePanelModeLabel');
             const positionView = document.getElementById('positionView');
             const tradeTableView = document.getElementById('tradeTableView');
             const showPosition = tradePanelMode === 'position';
 
             label.textContent = showPosition ? '当前持仓' : '交易记录';
+            title.textContent = showPosition ? '当前持仓' : '交易记录';
+            desc.textContent = showPosition ? '实时持仓和浮盈浮亏。' : '成交和曲线直接对照。';
+            chipLabel.textContent = showPosition ? '当前显示' : '当前显示';
             positionView.classList.toggle('is-hidden', !showPosition);
             tradeTableView.classList.toggle('is-hidden', showPosition);
         }
 
-        function updatePositions(status, marketState) {
-            const list = document.getElementById('positionList');
+        function updatePositions(status, marketState, trades) {
+            const tbody = document.getElementById('positionTable');
             const positions = Array.isArray(status?.open_positions) ? status.open_positions : [];
+
             if (!positions.length) {
-                list.innerHTML = '<div class="empty-state">当前空仓</div>';
+                tbody.innerHTML = '<tr><td colspan="7" class="table-empty">当前空仓</td></tr>';
                 return;
             }
 
-            list.innerHTML = positions.map((position) => {
+            tbody.innerHTML = positions.map((position) => {
                 const direction = (position.direction || 'long') === 'short' ? 'short' : 'long';
-                const directionText = direction === 'long' ? '做多' : '做空';
                 const entryPrice = Number(position.entryPrice) || 0;
                 const currentPrice = Number(position.markPrice) || Number(marketState?.price) || entryPrice;
                 const unrealized = Number(position.unrealizedProfit) || 0;
-                const movePct = entryPrice ? (((currentPrice - entryPrice) / entryPrice) * (direction === 'short' ? -100 : 100)) : 0;
+                const pnlClass = unrealized > 0 ? 'pnl-positive' : unrealized < 0 ? 'pnl-negative' : 'pnl-flat';
+                const openedTrade = Array.isArray(trades)
+                    ? [...trades].reverse().find((trade) => {
+                        const tradeDirection = (trade.direction || 'long') === 'short' ? 'short' : 'long';
+                        return trade.symbol === position.symbol
+                            && tradeDirection === direction
+                            && String(trade.tradeAction || '').toUpperCase() === 'OPEN';
+                    })
+                    : null;
 
                 return `
-                    <div class="position-item">
-                        <div class="position-row">
-                            <div class="position-symbol">${position.symbol || '--'}</div>
-                            <span class="dir-badge ${direction}">${directionText}</span>
-                        </div>
-                        <div class="position-grid">
-                            <div class="position-stat">
-                                <span>浮盈亏</span>
-                                <strong class="${unrealized > 0 ? 'pnl-positive' : unrealized < 0 ? 'pnl-negative' : 'pnl-flat'}">${formatSigned(unrealized)} USDT</strong>
-                            </div>
-                            <div class="position-stat">
-                                <span>浮动比例</span>
-                                <strong>${formatSigned(movePct)}%</strong>
-                            </div>
-                            <div class="position-stat">
-                                <span>开仓价</span>
-                                <strong>${entryPrice.toFixed(2)}</strong>
-                            </div>
-                            <div class="position-stat">
-                                <span>现价</span>
-                                <strong>${currentPrice.toFixed(2)}</strong>
-                            </div>
-                            <div class="position-stat">
-                                <span>数量</span>
-                                <strong>${Number(position.amount || 0).toFixed(3)}</strong>
-                            </div>
-                            <div class="position-stat">
-                                <span>杠杆</span>
-                                <strong>${position.leverage ? `${position.leverage}x` : '--'}</strong>
-                            </div>
-                        </div>
-                    </div>
+                    <tr>
+                        <td>${openedTrade?.time ? openedTrade.time.substring(5, 16) : '--'}</td>
+                        <td><span class="dir-badge ${direction}">${direction === 'long' ? '做多' : '做空'}</span></td>
+                        <td>${(position.symbol || '--').replace('USDT', '')}</td>
+                        <td>${entryPrice.toFixed(2)}</td>
+                        <td>${currentPrice.toFixed(2)}</td>
+                        <td>${position.leverage ? `${position.leverage}x` : '--'}</td>
+                        <td class="${pnlClass}">${formatSigned(unrealized)} USDT</td>
+                    </tr>
                 `;
             }).join('');
         }
@@ -1733,22 +1696,35 @@
                         }
                     }
                 }
-            });
+                });
+        }
+
+        function syncRotatingPanels() {
+            const slot = Math.floor(Date.now() / 30000);
+            tradePanelMode = slot % 2 === 0 ? 'position' : 'trades';
+            chartScope = slot % 2 === 0 ? '12h' : 'all';
+            updateTradePanelMode();
+            if (latestStatus) {
+                updatePositions(latestStatus, latestMarketState, latestTrades);
+            }
+            if (latestTrades.length) {
+                updateChart(latestTrades);
+            }
         }
 
         async function loadData() {
             try {
                 const bust = `t=${Date.now()}`;
-                const [thoughts, trades, strategy, status] = await Promise.all([
+                const [thoughts, trades, status] = await Promise.all([
                     fetch(`thinking.json?${bust}`, { cache: 'no-store' }).then((res) => res.json()),
                     fetch(`trades.json?${bust}`, { cache: 'no-store' }).then((res) => res.json()),
-                    fetch(`strategy.json?${bust}`, { cache: 'no-store' }).then((res) => res.json()),
                     fetch(`status.json?${bust}`, { cache: 'no-store' }).then((res) => res.json())
                 ]);
 
+                const displayStrategy = resolveDisplayStrategy(status);
                 const openPosition = findOpenPosition(trades, status);
                 const openTrade = findOpenTrade(trades);
-                const fallbackSymbol = Array.isArray(strategy?.coins) && strategy.coins.length ? `${strategy.coins[0]}USDT` : 'SOLUSDT';
+                const fallbackSymbol = Array.isArray(displayStrategy?.coins) && displayStrategy.coins.length ? `${displayStrategy.coins[0]}USDT` : 'SOLUSDT';
                 const marketSymbol = openPosition?.symbol || fallbackSymbol;
                 const marketState = openPosition?.markPrice
                     ? {
@@ -1767,13 +1743,11 @@
                 latestOpenPosition = openPosition;
                 latestMarketState = marketState;
 
+                syncRotatingPanels();
                 updateThinking(thoughts);
                 updateTrades(trades, openTrade, openPosition);
-                updatePositions(status, marketState);
-                updateTradePanelMode();
-                updateStrategy(strategy);
+                updateStrategy(status);
                 updateStatus(status);
-                updateChart(trades);
 
                 const lastTrade = trades[trades.length - 1];
                 const currentBalance = Number(status?.equity) || Number(status?.balance) || Number(lastTrade?.balance) || initialBalance;
@@ -1793,7 +1767,7 @@
                     positionPnl: openPosition ? marketState.pnl : 0,
                     totalPnl,
                     trades,
-                    strategy,
+                    strategy: displayStrategy,
                     status
                 });
             } catch (error) {
@@ -1804,23 +1778,11 @@
         updateRunTime();
         updateLiveClock();
         loadData();
-        updateTradePanelMode();
+        syncRotatingPanels();
         setInterval(updateLiveClock, 1000);
         setInterval(updateRunTime, 60000);
         setInterval(loadData, 5000);
-        setInterval(() => {
-            chartScope = chartScope === '12h' ? 'all' : '12h';
-            if (latestTrades.length) {
-                updateChart(latestTrades);
-            }
-        }, 30000);
-        setInterval(() => {
-            tradePanelMode = tradePanelMode === 'position' ? 'trades' : 'position';
-            updateTradePanelMode();
-            if (latestStatus) {
-                updatePositions(latestStatus, latestMarketState);
-            }
-        }, 30000);
+        setInterval(syncRotatingPanels, 1000);
     </script>
 </body>
 </html>

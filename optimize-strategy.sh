@@ -2,4 +2,10 @@
 set -euo pipefail
 
 cd /Users/sonic/.openclaw/workspace/trading-bot
-exec python3 /Users/sonic/.openclaw/workspace/trading-bot/trade.py optimize "$@"
+if [ -f .env ]; then
+  set -a
+  . ./.env
+  set +a
+fi
+
+exec python3 /Users/sonic/.openclaw/workspace/trading-bot/update_strategy_status.py "$@"

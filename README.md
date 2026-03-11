@@ -1,6 +1,6 @@
 # OpenClaw 24小时自动交易挑战
 
-本项目是一个 Binance 合约交易看板 + 自动交易脚本。
+本项目是一个 Binance 合约交易看板 + `v2` 自动交易脚本。
 
 ## 配置 API Key
 
@@ -23,17 +23,18 @@ BINANCE_SECRET_KEY=your_binance_secret_key_here
 实盘运行：
 
 ```bash
-python3 trade.py run
+python3 trade_v2.py run
 ```
 
-策略优化：
+策略状态刷新：
 
 ```bash
-python3 trade.py optimize
+python3 update_strategy_status.py
 ```
 
 ## 说明
 
 - `.env` 不会被提交到 Git
 - 页面主文件是 `index.html`
-- 交易核心脚本是 `trade.py`
+- 当前交易核心脚本是 `trade_v2.py`
+- 页面策略展示只读取 `status.json` 中的 `strategy_v2`

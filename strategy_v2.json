@@ -1,0 +1,105 @@
+{
+  "version": "2.0-trend-reversal",
+  "coins": ["BTC", "ETH", "SOL", "XRP", "BNB"],
+  "coinUniverse": [],
+  "topN": 5,
+  "universeTopN": 20,
+  "scoreWeights": {
+    "priceChange30m": 0.30,
+    "volumeGrowth": 0.25,
+    "volatility": 0.25,
+    "relativeBTCETH": 0.20
+  },
+  "marketFilter": {
+    "btcEthDropThreshold": 0.03,
+    "pauseMinutes": 15
+  },
+  "trendFilter": {
+    "ma30SlopeThreshold": 0.0015,
+    "volatility15mThreshold": 0.01,
+    "maCrossMaxCount": 3,
+    "lookbackMinutes": 30
+  },
+  "entry": {
+    "maDistanceMin": 0.006,
+    "maDistanceMax": 0.012,
+    "volumeDeclining": true,
+    "priceActionConfirm": true,
+    "structureConfirm": true,
+    "requiredConditions": 3
+  },
+  "fakeBreakout": {
+    "volumeCheck": true,
+    "timeWindowMinutes": 2
+  },
+  "orders": {
+    "limitOrderOffset": 0.0005,
+    "limitOrderTimeoutSeconds": 10,
+    "stopLossUseMarket": true,
+    "takeProfitUseLimit": true,
+    "partialFillThreshold": 0.5
+  },
+  "fees": {
+    "makerFee": 0.0002,
+    "takerFee": 0.0005,
+    "slippageReserve": 0.001
+  },
+  "position": {
+    "sizeMinFraction": 0.10,
+    "sizeMaxFraction": 0.15,
+    "leverageVolatilityLow": {"max": 0.015, "leverage": 10},
+    "leverageVolatilityMid": {"max": 0.03, "leverage": 7},
+    "leverageVolatilityHigh": {"max": 999, "leverage": 5},
+    "maxConcurrentPositions": 3,
+    "maxTotalRiskPct": 0.06
+  },
+  "stopLoss": {
+    "fixedLossPct": 0.015,
+    "useStructureProtection": true
+  },
+  "takeProfit": {
+    "firstTargetPct": 0.04,
+    "firstTargetClosePct": 0.5,
+    "secondTargetPct": 0.08,
+    "trailToBreakEven": true,
+    "trendBreakExit": true
+  },
+  "timeExit": {
+    "enabled": true,
+    "maxHoldMinutes": 30,
+    "limitOrderOffset": 0.0005,
+    "limitOrderTimeoutSeconds": 30
+  },
+  "funding": {
+    "rateThreshold": 0.001,
+    "settlementHours": [0, 8, 16],
+    "preSettlementMinutes": 5
+  },
+  "riskControl": {
+    "drawdown20Pct": 0.5,
+    "drawdown30Pct": 0.25,
+    "drawdown40Pct": 1.0,
+    "stopOn40Pct": true
+  },
+  "consecutiveLoss": {
+    "loss3PauseMinutes": 10,
+    "loss5PauseMinutes": 30,
+    "sizeReductionPct": 0.5
+  },
+  "cooldown": {
+    "generalMinutes": 3,
+    "symbolAfterSLMinutes": 5
+  },
+  "exceptions": {
+    "priceGapThreshold": 0.08,
+    "priceGapPauseMinutes": 5,
+    "klineGapMaxCount": 2,
+    "apiRetryMinutes": 1,
+    "maxRetries": 3
+  },
+  "scanning": {
+    "dataUpdateIntervalSeconds": 60,
+    "universeUpdateIntervalMinutes": 10
+  },
+  "mode": "trend-reversal"
+}

@@ -1775,5 +1775,44 @@
     "leverage": 10,
     "balance": 56.8662107,
     "tradeAction": "OPEN"
+  },
+  {
+    "time": "2026-03-11 13:12:03",
+    "type": "SELL",
+    "symbol": "BTCUSDT",
+    "amount": 0.008,
+    "price": 69544.0,
+    "pnl": -3.78451988,
+    "reason": "软止损 0.60%",
+    "direction": "long",
+    "leverage": 10,
+    "balance": 52.7368651,
+    "tradeAction": "CLOSE"
+  },
+  {
+    "time": "2026-03-11 14:00:02",
+    "type": "BUY",
+    "symbol": "SOLUSDT",
+    "amount": 5.81,
+    "price": 86.66,
+    "pnl": 0.0,
+    "reason": "主流币池全仓做多 | 止损 82.16000000 | 主流成交额第3名 涨幅 +0.23% | RSI 67 | 1m -0.01% | 3m +0.28% | 5m +0.16% | 15m趋势 +0.39% | 波动 0.45% | 量能 2.71x | 回调 ✗",
+    "direction": "long",
+    "leverage": 10,
+    "balance": 52.4850016,
+    "tradeAction": "OPEN"
+  },
+  {
+    "time": "2026-03-11 14:31:02",
+    "type": "SELL",
+    "symbol": "SOLUSDT",
+    "amount": 5.81,
+    "price": 86.15,
+    "pnl": -3.19414725,
+    "reason": "软止损 0.60%",
+    "direction": "long",
+    "leverage": 10,
+    "balance": 48.92309395,
+    "tradeAction": "CLOSE"
   }
 ]
