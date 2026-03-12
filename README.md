@@ -1,40 +1,83 @@
-# OpenClaw 24小时自动交易挑战
+# OpenClaw Trading Bot 🤖
 
-本项目是一个 Binance 合约交易看板 + `v2` 自动交易脚本。
+Binance 永续合约自动交易机器人，内置两套量化策略和实时监控仪表盘。通过 Cloudflare Pages 部署前端面板，定时任务驱动交易逻辑。
 
-## 配置 API Key
+## 📁 项目文件说明
 
-1. 复制 `.env.example` 为 `.env`
-2. 填入你自己的 Binance API Key
+### 核心交易脚本
+
+| 文件 | 说明 |
+|------|------|
+| `trade_v2.py` | **主策略 — 趋势回调 v2.0**。940 行 Python 脚本，包含 Binance API 客户端、技术指标计算（SMA / ATR / 波动率 / MA 交叉）、币种评分系统（按涨跌幅·量能·波动率·相对 BTC/ETH 综合打分）、趋势过滤、4 选 3 回调开仓条件、分段止盈 (+4%/+8%)、固定 1.5% 止损 + 结构保护、回撤风控及连续亏损暂停机制。每分钟循环扫描一次。 |
+| `trade_scalping.py` | **备选策略 — 1 分钟极速波段炒单**。固定 0.5% 止损、1% 平半仓 → 2% 全平、追踪止盈微利保护、15 分钟强制平仓。基于均线 ±0.1%~0.4% 回调入场，适合高波动行情。 |
+| `update_strategy_status.py` | 读取 `strategy_v2.json` 配置，将策略参数（止盈/止损/杠杆/仓位等）写入 `status.json`，供前端面板展示。由 cron 每分钟调用。 |
+
+### Shell 启动脚本
+
+| 文件 | 说明 |
+|------|------|
+| `trade.sh` | 加载 `.env` 环境变量，检测 `trade_v2.py` 是否已在运行（防重复启动），然后执行主策略。 |
+| `run-trade.sh` | 包装 `trade.sh`，将输出重定向到 `trade.log`。适合作为 cron 定时任务入口。 |
+| `optimize-strategy.sh` | 加载环境变量后执行 `update_strategy_status.py`，更新策略状态信息。 |
+
+### 配置文件
+
+| 文件 | 说明 |
+|------|------|
+| `strategy_v2.json` | 趋势回调 v2.0 的完整策略参数。包含评分权重、入场条件、止盈止损比例、仓位管理、杠杆梯度、风控阈值、冷却时间、异常处理等约 100 项配置。 |
+| `.env.example` | 环境变量模板，需填入 `BINANCE_API_KEY` 和 `BINANCE_SECRET_KEY`。 |
+| `.env` | **实际密钥文件**（已被 `.gitignore` 排除）。 |
+| `.gitignore` | 忽略 `.env`、`__pycache__/`、`*.log`、`.DS_Store`。 |
+
+### 运行时数据（自动生成）
+
+| 文件 | 说明 |
+|------|------|
+| `status.json` | 机器人运行状态快照：账户余额、持仓信息、策略模式、监控币种列表、最新信号等。前端面板通过读取此文件渲染数据。 |
+| `trades.json` | 交易记录日志，保留最近 500 笔交易的详细信息（时间、方向、价格、PnL、原因、杠杆等）。 |
+| `thinking.json` | 机器人"思考"日志，记录每次扫描的判断过程（信号评估、跳过原因等），保留最近 200 条。 |
+
+### 前端仪表盘
+
+| 文件 | 说明 |
+|------|------|
+| `index.html` | **单文件实时监控面板**（~2000 行）。深色科技风 UI，使用 Chart.js 绘制资产曲线，展示账户余额、PnL、持仓详情、交易历史、策略参数、AI 思考日志。自动轮询 `status.json` / `trades.json` / `thinking.json` 刷新数据。 |
+| `redesign-preview.png` | 面板 UI 预览截图 #1。 |
+| `redesign-preview-2.png` | 面板 UI 预览截图 #2。 |
+
+### 部署相关
+
+| 文件/目录 | 说明 |
+|-----------|------|
+| `.cf-pages-release/` | Cloudflare Pages 部署目录，包含前端面板的发布版本（`index.html`、静态数据文件、`_headers` 配置）。 |
+
+## 🚀 快速开始
 
 ```bash
+# 1. 配置 API 密钥
 cp .env.example .env
-```
+# 编辑 .env 填入你的 Binance API Key 和 Secret Key
 
-`.env` 内容示例：
-
-```env
-BINANCE_API_KEY=your_binance_api_key_here
-BINANCE_SECRET_KEY=your_binance_secret_key_here
-```
-
-## 运行
-
-实盘运行：
-
-```bash
+# 2. 运行主策略
 python3 trade_v2.py run
+
+# 3. 或使用 shell 启动（带防重复启动和日志记录）
+./run-trade.sh
 ```
 
-策略状态刷新：
+## ⚙️ 策略简介
 
-```bash
-python3 update_strategy_status.py
-```
+### 趋势回调 v2.0（主策略）
+- **选币**：从现货成交额 Top 30 中按涨跌幅·量能·波动率·相对强弱综合评分，取前 5
+- **入场**：MA30 斜率 > 0.15% + 波动率 > 1% + MA 交叉 < 3 次 → 4 选 3 回调条件开仓
+- **止盈**：+4% 平 50%（移止损至成本），+8% 全平
+- **止损**：固定 1.5% + 结构保护
+- **杠杆**：低波动 10x / 中波动 7x / 高波动 5x
+- **风控**：回撤 40% 停机、连亏暂停、冷却期
 
-## 说明
-
-- `.env` 不会被提交到 Git
-- 页面主文件是 `index.html`
-- 当前交易核心脚本是 `trade_v2.py`
-- 页面策略展示只读取 `status.json` 中的 `strategy_v2`
+### 极速波段 v1.0（备选）
+- **入场**：均线回调 ±0.1%~0.4%
+- **止损**：0.5% 固定
+- **止盈**：1% 平半仓 → 2% 全平
+- **追踪保护**：0.6% → 0.3% 全平 / 1.5% 后回落至 1.0% 全平
+- **时间退出**：15 分钟强制平仓

@@ -242,34 +242,119 @@
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            padding: 8px 12px;
+            padding: 8px 16px;
             border-radius: 999px;
             background: rgba(5, 14, 29, 0.9);
-            border: 1px solid rgba(0, 247, 178, 0.32);
-            color: var(--positive);
+            border: 1px solid rgba(107, 114, 128, 0.32);
+            color: #6b7280;
             font-weight: 600;
             font-size: 0.9rem;
             text-transform: uppercase;
             letter-spacing: 0.14em;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+
+        .live-chip:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 20px rgba(51, 215, 255, 0.15);
+        }
+
+        .live-chip:active {
+            transform: scale(0.97);
+        }
+
+        .live-chip.is-active {
+            border-color: rgba(0, 247, 178, 0.32);
+            color: var(--positive);
         }
 
         .live-chip .clock {
             margin-left: 6px;
             padding-left: 10px;
-            border-left: 1px solid rgba(0, 247, 178, 0.22);
-            color: rgba(244, 251, 255, 0.9);
+            border-left: 1px solid rgba(107, 114, 128, 0.22);
+            color: rgba(244, 251, 255, 0.6);
             font-family: 'Orbitron', sans-serif;
             font-size: 0.92rem;
             letter-spacing: 0.08em;
+            transition: all 0.3s ease;
+        }
+
+        .live-chip.is-active .clock {
+            border-left-color: rgba(0, 247, 178, 0.22);
+            color: rgba(244, 251, 255, 0.9);
         }
 
         .status-dot {
             width: 10px;
             height: 10px;
             border-radius: 50%;
+            background: #6b7280;
+            box-shadow: none;
+            animation: none;
+            transition: all 0.3s ease;
+        }
+
+        .live-chip.is-active .status-dot {
             background: var(--positive);
             box-shadow: 0 0 16px rgba(0, 247, 178, 0.9);
             animation: pulse 2.2s infinite;
+        }
+
+        .streaming-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(5, 14, 29, 0.9);
+            border: 1px solid rgba(107, 114, 128, 0.32);
+            color: #6b7280;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+
+        .streaming-chip:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 20px rgba(255, 59, 48, 0.12);
+        }
+
+        .streaming-chip:active {
+            transform: scale(0.97);
+        }
+
+        .streaming-chip.is-active {
+            border-color: rgba(255, 59, 48, 0.4);
+            color: #ff3b30;
+        }
+
+        .streaming-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #6b7280;
+            box-shadow: none;
+            animation: none;
+            transition: all 0.3s ease;
+        }
+
+        .streaming-chip.is-active .streaming-dot {
+            background: #ff3b30;
+            box-shadow: 0 0 16px rgba(255, 59, 48, 0.9);
+            animation: pulse 1.6s infinite;
+        }
+
+        .topbar-chips {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            align-items: center;
         }
 
         @keyframes pulse {
@@ -829,6 +914,203 @@
             background: transparent;
         }
 
+        /* MacBook compact height: keep everything visible within 100vh (no page scroll). */
+        @media (max-height: 900px) and (min-width: 1101px) {
+            .app-shell {
+                padding: 10px;
+                gap: 8px;
+            }
+
+            .topbar {
+                padding: 12px 14px;
+                gap: 12px;
+            }
+
+            .eyebrow {
+                padding: 5px 9px;
+                font-size: 0.62rem;
+            }
+
+            .brand-title {
+                margin-top: 8px;
+                font-size: clamp(1.55rem, 2.6vw, 2.35rem);
+            }
+
+            .brand-subtitle {
+                margin-top: 6px;
+                font-size: 0.74rem;
+            }
+
+            .broadcast-ribbon {
+                margin-top: 8px;
+                height: 34px;
+            }
+
+            .broadcast-item {
+                font-size: 0.76rem;
+            }
+
+            .live-chip {
+                padding: 10px 14px;
+            }
+
+            .mini-matrix {
+                gap: 8px;
+            }
+
+            .mini-card {
+                min-height: 84px;
+                padding: 12px;
+            }
+
+            .mini-card strong {
+                font-size: 1.12rem;
+            }
+
+            .mini-card small {
+                font-size: 0.86rem;
+            }
+
+            .overview-grid {
+                gap: 8px;
+            }
+
+            .metric-card {
+                min-height: 84px;
+                padding: 12px 13px 11px;
+            }
+
+            .metric-value {
+                margin-top: 10px;
+                font-size: 1.48rem;
+            }
+
+            .metric-note {
+                margin-top: 6px;
+                font-size: 0.78rem;
+            }
+
+            .dashboard-grid,
+            .layout-column {
+                gap: 8px;
+            }
+
+            .left-column {
+                /* Avoid hard minimums that clip content on laptop-height viewports */
+                grid-template-rows: 1.18fr 0.72fr;
+            }
+
+            .panel {
+                padding: 12px;
+            }
+
+            .panel-head {
+                margin-bottom: 8px;
+            }
+
+            .panel-title {
+                font-size: 1rem;
+            }
+
+            .panel-desc {
+                font-size: 0.76rem;
+            }
+
+            .meta-pill {
+                padding: 4px 9px;
+                font-size: 0.66rem;
+            }
+
+            .chart-container {
+                min-height: 260px;
+            }
+
+            .chart-container canvas {
+                min-height: 260px;
+            }
+
+            .strategy-panel {
+                min-height: 0;
+            }
+
+            .strategy-item {
+                padding: 10px 11px;
+            }
+
+            .strategy-item .label {
+                font-size: 0.68rem;
+            }
+
+            .strategy-item .value {
+                margin-top: 6px;
+                font-size: 1.02rem;
+            }
+
+            /* Keep watchlist visible without consuming vertical space */
+            .token-strip {
+                margin-top: 8px;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                overflow-y: hidden;
+                padding-bottom: 2px;
+            }
+
+            .token-pill {
+                white-space: nowrap;
+                padding: 5px 9px;
+                font-size: 0.66rem;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+
+            thead th {
+                padding: 8px 10px;
+            }
+
+            tbody td {
+                padding: 10px 10px;
+            }
+
+            .thinking-list {
+                gap: 7px;
+            }
+
+            .thinking-item {
+                padding: 9px 10px;
+            }
+
+            .thinking-time {
+                margin-bottom: 5px;
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-height: 820px) and (min-width: 1101px) {
+            .app-shell {
+                padding: 9px;
+                gap: 7px;
+            }
+
+            .topbar {
+                padding: 11px 12px;
+            }
+
+            .metric-value {
+                font-size: 1.4rem;
+            }
+
+            .left-column {
+                grid-template-rows: 1.22fr 0.68fr;
+            }
+
+            .chart-container,
+            .chart-container canvas {
+                min-height: 240px;
+            }
+        }
+
         @media (max-width: 1100px) {
             body {
                 overflow: auto;
@@ -1027,10 +1309,16 @@
             </div>
 
             <div class="topbar-side">
-                <div class="live-chip">
-                    <span class="status-dot"></span>
-                    实时执行中
-                    <span class="clock" id="liveClock">--:--:--</span>
+                <div class="topbar-chips">
+                    <div class="streaming-chip" id="streamingChip" onclick="toggleStreaming()" title="点击切换直播状态">
+                        <span class="streaming-dot" id="streamingDot"></span>
+                        <span id="streamingLabel">直播关</span>
+                    </div>
+                    <div class="live-chip" id="liveChip" onclick="toggleTrading()" title="点击切换交易状态">
+                        <span class="status-dot" id="statusDot"></span>
+                        <span id="liveLabel">已停止</span>
+                        <span class="clock" id="liveClock">00:00:00</span>
+                    </div>
                 </div>
 
                 <div class="mini-matrix">
@@ -1103,11 +1391,6 @@
                             <div class="panel-kicker">资金曲线</div>
                             <div class="panel-title">资产增长轨迹</div>
                             <div class="panel-desc">优先看资金变化。</div>
-                            <div class="chart-meta">
-                                <div class="meta-pill">模型: MiniMax M2.5</div>
-                                <div class="meta-pill">交易所: Binance 合约</div>
-                                <div class="meta-pill" id="chartCapital">本金: 110 USDT 挑战</div>
-                            </div>
                         </div>
                         <div class="head-chip">
                             <span id="chartModeLabel">12小时轨迹</span>
@@ -1121,10 +1404,10 @@
 
                 <section class="shell-card panel strategy-panel">
                     <div class="panel-head">
-                        <div>
-                            <div class="panel-kicker">策略矩阵</div>
-                            <div class="panel-title">当前策略参数</div>
-                            <div class="panel-desc">直接读取运行配置。</div>
+                        <div class="chart-meta">
+                            <div class="meta-pill">模型: MiniMax M2.5</div>
+                            <div class="meta-pill">交易所: Binance 合约</div>
+                            <div class="meta-pill" id="chartCapital">本金: 110 USDT 挑战</div>
                         </div>
                     </div>
 
@@ -1417,6 +1700,72 @@
             document.getElementById('systemLastRun').textContent = formatLastRun(status?.last_run);
         }
 
+        // ===== 手动交易状态切换 =====
+        let tradingActive = false;
+        let tradingStartTime = null;
+        let tradingElapsedWhenStopped = 0;
+        let tradingTimerInterval = null;
+
+        function formatElapsed(ms) {
+            const totalSec = Math.floor(ms / 1000);
+            const h = String(Math.floor(totalSec / 3600)).padStart(2, '0');
+            const m = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
+            const s = String(totalSec % 60).padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
+
+        function updateElapsedDisplay() {
+            if (!tradingActive) return;
+            const elapsed = Date.now() - tradingStartTime;
+            document.getElementById('liveClock').textContent = formatElapsed(elapsed);
+        }
+
+        function toggleTrading() {
+            const chip = document.getElementById('liveChip');
+            const label = document.getElementById('liveLabel');
+            const clock = document.getElementById('liveClock');
+
+            if (!tradingActive) {
+                // 启动交易
+                tradingActive = true;
+                tradingStartTime = Date.now();
+                tradingElapsedWhenStopped = 0;
+                label.textContent = '交易进行中';
+                chip.classList.add('is-active');
+                clock.textContent = '00:00:00';
+                tradingTimerInterval = setInterval(updateElapsedDisplay, 1000);
+            } else {
+                // 停止交易
+                tradingActive = false;
+                tradingElapsedWhenStopped = Date.now() - tradingStartTime;
+                label.textContent = '已停止';
+                chip.classList.remove('is-active');
+                if (tradingTimerInterval) {
+                    clearInterval(tradingTimerInterval);
+                    tradingTimerInterval = null;
+                }
+                // 时间保持在停止时的值，不重置
+            }
+        }
+
+        // ===== 直播状态切换 =====
+        let streamingActive = false;
+
+        function toggleStreaming() {
+            const chip = document.getElementById('streamingChip');
+            const label = document.getElementById('streamingLabel');
+
+            if (!streamingActive) {
+                streamingActive = true;
+                label.textContent = '直播中';
+                chip.classList.add('is-active');
+            } else {
+                streamingActive = false;
+                label.textContent = '直播关';
+                chip.classList.remove('is-active');
+            }
+        }
+
         function updateBroadcastFeed({ marketSymbol, marketPrice, positionPnl, totalPnl, trades, strategy, status }) {
             const coinList = Array.isArray(strategy?.coins) ? strategy.coins : [];
             const coins = coinList.length ? coinList.join(' / ') : '--';
@@ -1565,7 +1914,19 @@
                 };
             }
 
-            const cutoff = Date.now() - (12 * 60 * 60 * 1000);
+            // Use the last available trade time as the anchor for "last 12 hours".
+            // If the dataset is stale (no trades in the past 12h), anchoring to Date.now()
+            // would make 12h mode fall back to full history and look like "no switching".
+            let anchorMs = Date.now();
+            for (let i = fullHistory.length - 1; i >= 0; i -= 1) {
+                const candidate = new Date(String(fullHistory[i].time).replace(' ', 'T'));
+                if (!Number.isNaN(candidate.getTime())) {
+                    anchorMs = candidate.getTime();
+                    break;
+                }
+            }
+
+            const cutoff = anchorMs - (12 * 60 * 60 * 1000);
             const cutoffIndex = fullHistory.findIndex((point) => {
                 const date = new Date(String(point.time).replace(' ', 'T'));
                 return !Number.isNaN(date.getTime()) && date.getTime() >= cutoff;
@@ -1776,10 +2137,8 @@
         }
 
         updateRunTime();
-        updateLiveClock();
         loadData();
         syncRotatingPanels();
-        setInterval(updateLiveClock, 1000);
         setInterval(updateRunTime, 60000);
         setInterval(loadData, 5000);
         setInterval(syncRotatingPanels, 1000);
