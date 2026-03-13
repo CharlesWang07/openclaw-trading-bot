@@ -14,6 +14,7 @@ import hmac
 import json
 import math
 import os
+import random
 import sys
 import time
 from dataclasses import dataclass
@@ -582,6 +583,122 @@ class TradingBot:
     def now_str(self) -> str:
         return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+    # ── 直播解说语料库 ──────────────────────────────────────
+    COMMENTARY = {
+        "scan_start": [
+            "🔄 新一轮扫描启动！让我看看谁在这个时间点还敢活跃...",
+            "🔄 雷达已开启，正在全市场搜索猎物...",
+            "🔄 又到了激动人心的扫描时间！各位币种请就位...",
+            "🔄 开始巡逻，看看有没有币种在偷偷搞事情...",
+            "🔄 AI之眼已觉醒，扫描全场中...",
+            "🔄 各位观众，新一轮市场体检开始了！",
+            "🔄 启动第N次扫描，这次一定有好戏看！",
+            "🔄 开始搜索！如果市场是海洋，我就是那条最敏锐的鲨鱼 🦈",
+        ],
+        "market_filter_fail": [
+            "⛔ 大盘崩了？{reason}... 先撤，留得青山在！",
+            "⛔ {reason}，看这架势，我决定先空仓看戏 🍿",
+            "⛔ 卧槽！{reason}，这种行情开仓等于送钱啊兄弟们",
+            "⛔ {reason}，大盘太拉垮了，我先去泡杯咖啡 ☕",
+            "⛔ {reason}，AI也怕被套，咱不当英雄，苟着！",
+            "⛔ {reason}，行情在下饺子呢！我选择坐在岸边钓鱼 🎣",
+            "⛔ {reason}，市场先生今天心情不好，等他冷静了再说",
+        ],
+        "trend_skip": [
+            "🔍 扫了一眼 {coin}，走势乱成一锅粥，跳过！",
+            "🔍 {coin} 在原地画圈圈，没啥搞头，下一个！",
+            "🔍 分析了 {coin}：{reason}，先不碰它",
+            "🔍 {coin} 的K线画得跟心电图似的，暂时不敢动",
+            "🔍 {coin} 趋势不明朗，机智如我选择观望",
+            "🔍 {coin}？看了一眼就跑了...",
+        ],
+        "long_signal": [
+            "📈 发现猎物！{coin} 出现做多信号：{cond}，准备冲了！",
+            "📈 {coin} 多头信号爆了：{cond}！老司机要发车了 🚀",
+            "📈 兄弟们看好了！{coin} 满足 {cond}，教科书级别的多单机会！",
+            "📈 {coin} 回调到位，{cond} 条件达标，AI决定抄底！",
+            "📈 {coin} 亮绿灯了！{cond}，资金已经在门口排队了",
+            "📈 注意！{coin} 出现黄金做多点位：{cond}，准备开干 💪",
+        ],
+        "short_signal": [
+            "📉 {coin} 空头信号来了：{cond}！准备做空收割",
+            "📉 {coin} 涨不动了，{cond}，该是空军出击的时候！",
+            "📉 发现 {coin} 弱势信号：{cond}，准备反手做空 🐻",
+            "📉 {coin} 的多头快没油了，{cond}，空军集合！",
+            "📉 {coin} 出现经典做空形态：{cond}，别说我没提醒各位",
+        ],
+        "open_long": [
+            "🎯 下单！{coin} 做多开仓 @ {price}，让利润飞一会儿！",
+            "🎯 冲了！{coin} 多单已挂 @ {price}，各位系好安全带 🎢",
+            "🎯 AI果断出手！{coin} 做多 @ {price}，信仰充值完毕",
+            "🎯 {coin} 做多入场 @ {price}，这波我很有信心！",
+        ],
+        "open_short": [
+            "🎯 下单！{coin} 做空开仓 @ {price}，等着它掉下来",
+            "🎯 空军出击！{coin} 空单已挂 @ {price} 🪂",
+            "🎯 反手做空 {coin} @ {price}，顺势而为才是王道",
+            "🎯 {coin} 空单入场 @ {price}，让空头的子弹飞一会儿",
+        ],
+        "close_profit": [
+            "🧾 落袋为安！{coin} 止盈平仓，又是美好的一笔 💰",
+            "🧾 {coin} 到达目标，漂亮地收割了这一波！利润入账 🤑",
+            "🧾 {coin} 平仓获利！谢谢市场先生的红包",
+        ],
+        "close_loss": [
+            "🧾 {coin} 触发止损平仓，小亏一笔，下次再战！",
+            "🧾 {coin} 认栽了，止损出局。留得青山在，不怕没柴烧 🌲",
+            "🧾 {coin} 方向做反了，果断止损。亏小钱保大命！",
+        ],
+        "close_trend_break": [
+            "🧾 {coin} 趋势突然反转！赶紧跑路，保住利润 🏃",
+            "🧾 {coin} 的趋势开始变脸了，机智撤退！",
+            "🧾 {coin} MA交叉反转，不恋战，直接跑！",
+        ],
+        "close_timeout": [
+            "🧾 {coin} 磨了半天不动，超时平仓换下一个目标！",
+            "🧾 {coin} 在那儿原地踏步30分钟了，换车找机会！",
+            "🧾 {coin} 超时了，AI不喜欢等太久，下一个！",
+        ],
+        "no_signal": [
+            "😴 这一轮没找到好机会，继续蹲守...",
+            "😴 市场太安静了，AI先打个盹，一分钟后再战...",
+            "😴 暂时没信号，各位观众别急，好戏还在后头...",
+            "😴 全场静默...这种时候最忌讳冲动交易，继续等！",
+            "😴 什么信号都没有？行吧，佛系等待中...",
+            "😴 当前行情：一潭死水。AI选择冥想等待下一波 🧘",
+            "😴 扫了一圈，啥也没有...这就是交易的日常啊朋友们",
+            "😴 没有机会就是最好的风控！咱不强行开单",
+        ],
+        "universe_update": [
+            "📡 交易池刷新！本轮选手：{coins}，各就位！",
+            "📡 AI精挑细选出了今天的战场：{coins}",
+            "📡 新一轮选拔结束，能上场的就这几位：{coins}",
+            "📡 交易池更新完毕，让我们欢迎今天的参赛选手：{coins} 🏟️",
+            "📡 从全市场几百个币里，我只看上了这些：{coins}",
+        ],
+        "paused_drawdown": [
+            "🚨 回撤太大了，强制休息！总得给自己留条命啊",
+            "🚨 紧急熔断！亏太多了，AI决定闭关修炼24小时",
+            "🚨 达到最大回撤，系统自动暂停。有时候不交易就是最好的交易",
+        ],
+        "paused_loss_streak": [
+            "⏸️ 连亏{n}把了，先冷静一下再说...",
+            "⏸️ 手感不好连亏{n}次，让AI缓缓再来",
+            "⏸️ 连败{n}场，为了避免上头，强制暂停中 🧊",
+        ],
+    }
+
+    def pick_comment(self, category: str, **kwargs) -> str:
+        """从语料库中随机选一条幽默解说"""
+        pool = self.COMMENTARY.get(category, [])
+        if not pool:
+            return ""
+        template = random.choice(pool)
+        try:
+            return template.format(**kwargs)
+        except (KeyError, IndexError):
+            return template
+
     def add_thought(self, message: str) -> None:
         thoughts = read_json(THINKING_FILE, [])
         thoughts.append({"time": self.now_str(), "thought": message})
@@ -662,7 +779,8 @@ class TradingBot:
                 self.trading_coins = self.scorer.get_top_scored(self.universe, self.config.top_n)
             self.last_universe_update = now
             print(f"交易币种: {self.trading_coins}")
-            self.add_thought(f"📡 V2交易池: {' / '.join(symbol.replace('USDT', '') for symbol in self.trading_coins) if self.trading_coins else '暂无'}")
+            coins_str = ' / '.join(symbol.replace('USDT', '') for symbol in self.trading_coins) if self.trading_coins else '暂无'
+            self.add_thought(self.pick_comment("universe_update", coins=coins_str))
     
     def get_balance(self) -> float:
         account = self.client.get_account()
@@ -682,6 +800,7 @@ class TradingBot:
             dd = (self.highest_balance - bal) / self.highest_balance
             if dd >= 0.40:
                 print("回撤40%，停机")
+                self.add_thought(self.pick_comment("paused_drawdown"))
                 self.pause_until = now + 86400
                 return True
         return False
@@ -745,7 +864,9 @@ class TradingBot:
                     "direction": direction,
                     "tradeAction": "OPEN",
                 })
-                self.add_thought(f"🎯 {symbol} {'做多' if direction == 'long' else '做空'} 开仓 {order_price:.4f}")
+                coin = symbol.replace('USDT', '')
+                cat = "open_long" if direction == "long" else "open_short"
+                self.add_thought(self.pick_comment(cat, coin=coin, price=f"{order_price:.4f}"))
                 return True
         except Exception as e:
             print(f"开仓失败: {e}")
@@ -762,6 +883,15 @@ class TradingBot:
             close_price = klines[-1]["close"] if klines else pos["entry"]
             self.client.place_order(symbol, side, "MARKET", pos["qty"], reduce_only=True)
             realized = (close_price - pos["entry"]) * pos["qty"] if pos["direction"] == "long" else (pos["entry"] - close_price) * pos["qty"]
+            coin = symbol.replace('USDT', '')
+            if reason == "trend_break":
+                self.add_thought(self.pick_comment("close_trend_break", coin=coin))
+            elif reason == "time_exit":
+                self.add_thought(self.pick_comment("close_timeout", coin=coin))
+            elif reason == "stop_loss" or realized < 0:
+                self.add_thought(self.pick_comment("close_loss", coin=coin))
+            else:
+                self.add_thought(self.pick_comment("close_profit", coin=coin))
             self.append_trade_record({
                 "time": self.now_str(),
                 "type": "SELL" if pos["direction"] == "long" else "BUY",
@@ -777,7 +907,6 @@ class TradingBot:
             })
             del self.positions[symbol]
             print(f"{symbol} 平仓: {reason}")
-            self.add_thought(f"🧾 {symbol} 平仓 {reason}")
             if reason in ["stop_loss", "time_exit"]:
                 self.consecutive_losses += 1
         except Exception as e:
@@ -837,13 +966,15 @@ class TradingBot:
         ok, reason = self.strategy.check_market_filter()
         if not ok:
             events.append(reason)
-            self.add_thought(f"⛔ 市场过滤: {reason}")
+            self.add_thought(self.pick_comment("market_filter_fail", reason=reason))
             return events, top_signal
         
         for symbol in self.trading_coins:
             ok, reason = self.strategy.check_trend_filter(symbol)
             if not ok:
-                events.append(f"{symbol.replace('USDT', '')}: {reason}")
+                coin = symbol.replace('USDT', '')
+                events.append(f"{coin}: {reason}")
+                self.add_thought(self.pick_comment("trend_skip", coin=coin, reason=reason))
                 continue
             
             trend = self.strategy.identify_trend(symbol)
@@ -857,17 +988,21 @@ class TradingBot:
             if trend == "uptrend":
                 ok, cond = self.strategy.check_long_entry(symbol)
                 if ok:
+                    coin = symbol.replace('USDT', '')
+                    cond_str = ' / '.join(cond)
                     print(f"{symbol} 多单信号")
-                    events.append(f"{symbol.replace('USDT', '')} 做多 {'/'.join(cond)}")
-                    self.add_thought(f"📈 {symbol} 做多信号 {' / '.join(cond)}")
+                    events.append(f"{coin} 做多 {'/'.join(cond)}")
+                    self.add_thought(self.pick_comment("long_signal", coin=coin, cond=cond_str))
                     self.open_position(symbol, "long")
             
             elif trend == "downtrend":
                 ok, cond = self.strategy.check_short_entry(symbol)
                 if ok:
+                    coin = symbol.replace('USDT', '')
+                    cond_str = ' / '.join(cond)
                     print(f"{symbol} 空单信号")
-                    events.append(f"{symbol.replace('USDT', '')} 做空 {'/'.join(cond)}")
-                    self.add_thought(f"📉 {symbol} 做空信号 {' / '.join(cond)}")
+                    events.append(f"{coin} 做空 {'/'.join(cond)}")
+                    self.add_thought(self.pick_comment("short_signal", coin=coin, cond=cond_str))
                     self.open_position(symbol, "short")
         return events, top_signal
     
@@ -876,13 +1011,13 @@ class TradingBot:
 
     def tick(self) -> None:
         events = [f"V2扫描 {datetime.now().strftime('%H:%M:%S')}"]
-        self.add_thought(f"🔄 V2扫描 {datetime.now().strftime('%H:%M:%S')}")
+        self.add_thought(self.pick_comment("scan_start"))
         self.check_positions()
         scan_events, top_signal = self.scan_and_trade()
         events.extend(scan_events)
         if len(events) == 1:
             events.append("no candidate")
-            self.add_thought("😴 V2没有可执行信号，等待下一轮")
+            self.add_thought(self.pick_comment("no_signal"))
         self.last_events = events[-8:]
         bal = self.get_balance()
         if bal > self.highest_balance:
