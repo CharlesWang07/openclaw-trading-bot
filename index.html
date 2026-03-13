@@ -1824,17 +1824,23 @@
             const chip = document.getElementById('liveChip');
             const label = document.getElementById('liveLabel');
             const clock = document.getElementById('liveClock');
+            
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
             if (!tradingActive) {
-                try {
-                    // Try to start the local bot via the local server API
-                    const res = await fetch('http://127.0.0.1:5000/api/bot/start', { method: 'POST' });
-                    if (!res.ok) {
-                        console.error('Failed to start local bot API:', await res.text());
-                        // We still start the UI state even if API fails so the user can test the UI
+                if (isLocalhost) {
+                    try {
+                        // Try to start the local bot via the local server API
+                        const res = await fetch('http://127.0.0.1:5000/api/bot/start', { method: 'POST' });
+                        if (!res.ok) {
+                            console.error('Failed to start local bot API:', await res.text());
+                            // We still start the UI state even if API fails so the user can test the UI
+                        }
+                    } catch (e) {
+                        console.warn('Local bot server not reachable. Ensure server.py is running on port 5000.', e);
                     }
-                } catch (e) {
-                    console.warn('Local bot server not reachable. Ensure server.py is running on port 5000.', e);
+                } else {
+                    console.info('Not on localhost. Local bot API call skipped for public users.');
                 }
 
                 // 启动交易 UI
@@ -1852,11 +1858,13 @@
                 
                 loadData();
             } else {
-                try {
-                    // Stop the local bot
-                    await fetch('http://127.0.0.1:5000/api/bot/stop', { method: 'POST' });
-                } catch (e) {
-                    console.warn('Local bot server not reachable.', e);
+                if (isLocalhost) {
+                    try {
+                        // Stop the local bot
+                        await fetch('http://127.0.0.1:5000/api/bot/stop', { method: 'POST' });
+                    } catch (e) {
+                        console.warn('Local bot server not reachable.', e);
+                    }
                 }
 
                 // 停止交易 UI
