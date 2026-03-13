@@ -1704,6 +1704,8 @@
         let tradingTimerInterval = null;
         let sessionStartBalance = null;
         let sessionStartTradeCount = 0;
+        let sessionStartThoughtCount = 0;
+        let latestThoughts = [];
 
         function formatElapsed(ms) {
             const totalSec = Math.floor(ms / 1000);
@@ -1731,6 +1733,7 @@
                 tradingElapsedWhenStopped = 0;
                 sessionStartBalance = null; // 会在接下来的 loadData 中捕获
                 sessionStartTradeCount = latestTrades ? latestTrades.length : 0;
+                sessionStartThoughtCount = latestThoughts ? latestThoughts.length : 0;
                 
                 label.textContent = '交易进行中';
                 chip.classList.add('is-active');
@@ -1798,11 +1801,19 @@
                 return;
             }
 
-            const signature = `${thoughts.length}-${thoughts[thoughts.length - 1]?.time || ''}`;
+            latestThoughts = thoughts;
+            const sessionThoughts = thoughts.slice(sessionStartThoughtCount);
+
+            if (!sessionThoughts.length) {
+                list.innerHTML = '<div class="empty-state">新会话已开始，等待AI思考中...</div>';
+                return;
+            }
+
+            const signature = `${sessionThoughts.length}-${sessionThoughts[sessionThoughts.length - 1]?.time || ''}`;
             if (signature === thoughtSignature) return;
             thoughtSignature = signature;
 
-            const items = thoughts.slice().reverse().slice(0, window.innerWidth <= 720 ? 18 : 20);
+            const items = sessionThoughts.slice().reverse().slice(0, window.innerWidth <= 720 ? 18 : 20);
             list.innerHTML = items.map((item, index) => `
                 <div class="thinking-item ${index === 0 ? 'new' : ''}">
                     <div class="thinking-time">${item.time ? item.time.substring(5, 16) : '--'}</div>
