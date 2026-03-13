@@ -1932,12 +1932,15 @@
         }
 
         let lastBroadcastIndex = 0;
-        function updateBroadcastFeed({ marketSymbol, marketPrice, positionPnl, totalPnl, trades, strategy, status }) {
+        let pendingBroadcastData = null;
+        let broadcastInitialized = false;
+
+        function applyBroadcast(data) {
+            const { marketSymbol, marketPrice, totalPnl, trades } = data;
             const pool = tradingActive ? [...BROADCAST_IDLE, ...BROADCAST_TRADING] : BROADCAST_IDLE;
             const shuffled = [...pool].sort(() => Math.random() - 0.5);
             const selected = shuffled.slice(0, 6);
 
-            // Mix in 1 real-time data item
             const dataItems = [];
             if (marketPrice) dataItems.push(`📊 <strong>${marketSymbol}</strong> 实时 <strong>${marketPrice.toFixed(2)} USDT</strong>`);
             if (totalPnl !== 0) dataItems.push(`💰 本轮收益 <strong>${formatSigned(totalPnl)} USDT</strong>`);
@@ -1947,11 +1950,31 @@
             const track = document.getElementById('broadcastTrack');
             track.innerHTML = buildBroadcastHtml(selected);
 
-            // Set animation speed based on content width
             const segWidth = track.querySelector('.broadcast-segment')?.offsetWidth || 2000;
-            const speed = 60; // pixels per second
+            const speed = 60;
             const duration = segWidth / speed;
             track.style.setProperty('--ticker-duration', `${duration}s`);
+        }
+
+        function updateBroadcastFeed(data) {
+            // Always store the latest data
+            pendingBroadcastData = data;
+
+            if (!broadcastInitialized) {
+                // First call: apply immediately and set up the listener
+                broadcastInitialized = true;
+                applyBroadcast(data);
+
+                const track = document.getElementById('broadcastTrack');
+                track.addEventListener('animationiteration', () => {
+                    // Animation completed one full cycle — safe to swap content
+                    if (pendingBroadcastData) {
+                        applyBroadcast(pendingBroadcastData);
+                        pendingBroadcastData = null;
+                    }
+                });
+            }
+            // Otherwise: just queue the data; it'll be applied when animation loops
         }
 
         function updateThinking(thoughts) {
